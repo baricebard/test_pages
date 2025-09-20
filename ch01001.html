@@ -6,8 +6,9 @@
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
     h1 { font-size: 1.4em; }
-    .info { margin: 8px 0; }
-    .label { font-weight: bold; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f5f5f5; }
     .unsupported { color: red; font-weight: bold; }
   </style>
 </head>
@@ -16,6 +17,40 @@
   <div id="output"></div>
 
   <script>
+    function explainValue(attr, value) {
+      if (value === undefined || value === null) return "未知";
+
+      switch (attr) {
+        case "type":
+          const typeMap = {
+            "bluetooth": "藍牙網路",
+            "cellular": "行動數據網路",
+            "ethernet": "有線網路",
+            "wifi": "Wi-Fi 無線網路",
+            "wimax": "WiMAX 網路",
+            "other": "其他網路",
+            "none": "無連線",
+            "unknown": "未知類型"
+          };
+          return typeMap[value] || value;
+
+        case "effectiveType":
+          const effMap = {
+            "slow-2g": "極慢 2G（模擬）",
+            "2g": "一般 2G",
+            "3g": "3G",
+            "4g": "4G 或以上"
+          };
+          return effMap[value] || value;
+
+        case "saveData":
+          return value ? "✅ 開啟省流模式" : "❌ 未開啟省流模式";
+
+        default:
+          return value;
+      }
+    }
+
     function showConnectionInfo() {
       const output = document.getElementById("output");
       const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -25,12 +60,55 @@
         return;
       }
 
-      let html = '';
-      html += `<p class="info"><span class="label">type：</span> ${conn.type || '未知'}</p>`;
-      html += `<p class="info"><span class="label">effectiveType：</span> ${conn.effectiveType || '未知'}</p>`;
-      html += `<p class="info"><span class="label">downlink：</span> ${conn.downlink ? conn.downlink + ' Mbps' : '未知'}</p>`;
-      html += `<p class="info"><span class="label">rtt：</span> ${conn.rtt ? conn.rtt + ' ms' : '未知'}</p>`;
-      html += `<p class="info"><span class="label">saveData：</span> ${conn.saveData ? '開啟' : '關閉'}</p>`;
+      const rows = [
+        {
+          name: "type",
+          desc: "網路類型（來源介面）",
+          value: conn.type,
+          note: "可能值：bluetooth、cellular、ethernet、wifi、wimax、other、none、unknown"
+        },
+        {
+          name: "effectiveType",
+          desc: "推估網路型態（由速度/延遲推測，不代表真實網路世代）",
+          value: conn.effectiveType,
+          note: "可能值：slow-2g、2g、3g、4g"
+        },
+        {
+          name: "downlink",
+          desc: "估計下行頻寬",
+          value: conn.downlink ? conn.downlink + ' Mbps' : "未知",
+          note: "浮點數 (Mbps)，瀏覽器估算，非真實速測值"
+        },
+        {
+          name: "rtt",
+          desc: "估計網路延遲",
+          value: conn.rtt ? conn.rtt + ' ms' : "未知",
+          note: "毫秒 (ms)，瀏覽器估算"
+        },
+        {
+          name: "saveData",
+          desc: "省流模式狀態",
+          value: conn.saveData,
+          note: "布林值，true = 開啟省流模式"
+        },
+        {
+          name: "onchange",
+          desc: "事件屬性（當連線變更時觸發）",
+          value: typeof conn.onchange === "function" ? "支援" : "不支援或未定義",
+          note: "可用 `addEventListener('change', ...)` 偵測網路狀態改變"
+        }
+      ];
+
+      let html = "<table><tr><th>屬性</th><th>目前值</th><th>說明</th><th>可能值/備註</th></tr>";
+      rows.forEach(r => {
+        html += `<tr>
+          <td>${r.name}</td>
+          <td>${explainValue(r.name, r.value)}</td>
+          <td>${r.desc}</td>
+          <td>${r.note}</td>
+        </tr>`;
+      });
+      html += "</table>";
 
       output.innerHTML = html;
     }
@@ -38,7 +116,7 @@
     // 初次執行
     showConnectionInfo();
 
-    // 監聽連線變更（部分瀏覽器支援）
+    // 監聽連線變更
     if (navigator.connection) {
       navigator.connection.addEventListener('change', showConnectionInfo);
     }
