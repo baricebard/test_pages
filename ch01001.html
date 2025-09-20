@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>網路連線資訊檢測</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+    h1 { font-size: 1.4em; }
+    .info { margin: 8px 0; }
+    .label { font-weight: bold; }
+    .unsupported { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>您的瀏覽器網路連線資訊</h1>
+  <div id="output"></div>
+
+  <script>
+    function showConnectionInfo() {
+      const output = document.getElementById("output");
+      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+      if (!conn) {
+        output.innerHTML = '<p class="unsupported">❌ 這個瀏覽器不支援 Network Information API。</p>';
+        return;
+      }
+
+      let html = '';
+      html += `<p class="info"><span class="label">type：</span> ${conn.type || '未知'}</p>`;
+      html += `<p class="info"><span class="label">effectiveType：</span> ${conn.effectiveType || '未知'}</p>`;
+      html += `<p class="info"><span class="label">downlink：</span> ${conn.downlink ? conn.downlink + ' Mbps' : '未知'}</p>`;
+      html += `<p class="info"><span class="label">rtt：</span> ${conn.rtt ? conn.rtt + ' ms' : '未知'}</p>`;
+      html += `<p class="info"><span class="label">saveData：</span> ${conn.saveData ? '開啟' : '關閉'}</p>`;
+
+      output.innerHTML = html;
+    }
+
+    // 初次執行
+    showConnectionInfo();
+
+    // 監聽連線變更（部分瀏覽器支援）
+    if (navigator.connection) {
+      navigator.connection.addEventListener('change', showConnectionInfo);
+    }
+  </script>
+</body>
+</html>
