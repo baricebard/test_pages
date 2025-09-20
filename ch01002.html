@@ -2,243 +2,133 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <title>行動裝置通訊/感測器 測試頁面 Demo</title>
+  <title>感測器測試頁面 (Tabs)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans TC", "PingFang TC", sans-serif; margin: 16px; line-height: 1.6; }
-    h1 { font-size: 1.3rem; margin: 0 0 8px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-    section { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-    th, td { border: 1px solid #eee; padding: 6px 8px; text-align: left; vertical-align: top; font-variant-numeric: tabular-nums; }
+    body { font-family: system-ui, sans-serif; margin: 16px; line-height: 1.6; }
+    h1 { font-size: 1.3rem; margin-bottom: 8px; }
+    .tabs { display: flex; border-bottom: 2px solid #ccc; margin-top: 16px; }
+    .tab-btn {
+      flex: 1; padding: 10px; cursor: pointer; text-align: center;
+      border: none; background: #f5f5f5; font-size: 1rem;
+    }
+    .tab-btn.active { background: #fff; border-bottom: 2px solid #007bff; font-weight: bold; }
+    .tab-content { display: none; padding: 12px; border: 1px solid #ccc; border-top: none; }
+    .tab-content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #eee; padding: 6px 8px; text-align: left; font-variant-numeric: tabular-nums; }
     th { background: #f7f7f7; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    .badge { padding: 2px 6px; border-radius: 999px; font-size: 0.85em; }
     .ok { background: #e6f5ea; color: #0a7b30; }
     .no { background: #fde8e8; color: #b42318; }
     .warn { background: #fff6e6; color: #8a5800; }
-    .btn { cursor: pointer; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fafafa; }
-    .btn + .btn { margin-left: 6px; }
-    .muted { color: #666; font-size: 0.92em; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
-    .live { font-weight: 600; }
-    .flex { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .small { font-size: 0.92em; }
-    .touchbox { border: 1px dashed #ccc; border-radius: 6px; min-height: 120px; display: flex; align-items: center; justify-content: center; user-select: none; }
+    .touchbox { border: 1px dashed #ccc; border-radius: 6px; min-height: 100px; display: flex; align-items: center; justify-content: center; margin-top: 10px; }
+    .btn { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fafafa; cursor: pointer; margin: 2px; }
+    .mono { font-family: monospace; }
   </style>
 </head>
 <body>
-  <h1>行動裝置通訊/感測器 測試頁面</h1>
-  <p class="muted small">
-    本頁示範：DeviceMotion（加速度/旋轉）、DeviceOrientation（方向角）、Touch 觸控、Vibration 震動。<br>
-    iOS Safari 需 <strong>HTTPS</strong> 且使用者互動後，才可授權感測器事件。
-  </p>
+  <h1>行動裝置感測器測試頁面</h1>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="support">支援狀態</button>
+    <button class="tab-btn" data-tab="motion">DeviceMotion</button>
+    <button class="tab-btn" data-tab="orientation">DeviceOrientation</button>
+    <button class="tab-btn" data-tab="touch">Touch</button>
+  </div>
 
-  <section>
-    <div class="flex">
-      <button id="btnStart" class="btn">▶️ 開始監聽</button>
-      <button id="btnStop" class="btn" disabled>⏸ 停止監聽</button>
-      <button id="btnPerm" class="btn">🔐 iOS 感測器權限</button>
-      <button id="btnVibrate" class="btn">📳 測試震動</button>
-      <span id="secureState" class="badge"></span>
-    </div>
-    <p id="note" class="muted small" style="margin-top:8px;"></p>
-  </section>
+  <div id="support" class="tab-content active">
+    <h2>支援狀態檢測</h2>
+    <table>
+      <tbody id="supportTable"></tbody>
+    </table>
+  </div>
 
-  <div class="grid" style="margin-top:12px;">
-    <section>
-      <h2>支援狀態</h2>
-      <table>
-        <tbody id="supportTable">
-          <!-- Filled by JS -->
-        </tbody>
-      </table>
-      <p class="muted small">提示：若顯示不支援，可能是瀏覽器或平台限制；iOS Safari 不支援 Vibration。</p>
-    </section>
+  <div id="motion" class="tab-content">
+    <h2>DeviceMotion (加速度/旋轉)</h2>
+    <table>
+      <tr><th>加速度</th><td class="mono" id="acc"></td></tr>
+      <tr><th>含重力加速度</th><td class="mono" id="accG"></td></tr>
+      <tr><th>旋轉速率</th><td class="mono" id="rot"></td></tr>
+      <tr><th>取樣間隔</th><td class="mono" id="interval"></td></tr>
+    </table>
+  </div>
 
-    <section>
-      <h2>DeviceMotion（加速度/旋轉速率）</h2>
-      <table>
-        <tbody>
-          <tr><th>加速度 (m/s²)</th><td class="mono"><span class="live" id="acc"></span></td></tr>
-          <tr><th>含重力加速度 (m/s²)</th><td class="mono"><span class="live" id="accG"></span></td></tr>
-          <tr><th>旋轉速率 (°/s)</th><td class="mono"><span class="live" id="rot"></span></td></tr>
-          <tr><th>取樣間隔 (ms)</th><td class="mono"><span class="live" id="interval"></span></td></tr>
-        </tbody>
-      </table>
-      <p class="muted small">說明：由瀏覽器事件估算；不同裝置精度差異大。</p>
-    </section>
+  <div id="orientation" class="tab-content">
+    <h2>DeviceOrientation (方向角)</h2>
+    <table>
+      <tr><th>alpha</th><td class="mono" id="alpha"></td></tr>
+      <tr><th>beta</th><td class="mono" id="beta"></td></tr>
+      <tr><th>gamma</th><td class="mono" id="gamma"></td></tr>
+      <tr><th>absolute</th><td class="mono" id="absolute"></td></tr>
+    </table>
+  </div>
 
-    <section>
-      <h2>DeviceOrientation（方向角）</h2>
-      <table>
-        <tbody>
-          <tr><th>alpha (°)</th><td class="mono"><span class="live" id="alpha"></span></td></tr>
-          <tr><th>beta (°)</th><td class="mono"><span class="live" id="beta"></span></td></tr>
-          <tr><th>gamma (°)</th><td class="mono"><span class="live" id="gamma"></span></td></tr>
-          <tr><th>absolute</th><td class="mono"><span class="live" id="absolute"></span></td></tr>
-        </tbody>
-      </table>
-      <p class="muted small">說明：裝置相對地球座標的角度；不同瀏覽器校正方式略有差異。</p>
-    </section>
-
-    <section>
-      <h2>Touch 觸控</h2>
-      <div id="touchbox" class="touchbox">在此框內 <strong>按住/滑動/多指觸控</strong></div>
-      <table style="margin-top:8px;">
-        <tbody>
-          <tr><th>觸點數</th><td class="mono"><span class="live" id="touchCount"></span></td></tr>
-          <tr><th>主要觸點座標</th><td class="mono"><span class="live" id="touchPos"></span></td></tr>
-          <tr><th>事件</th><td class="mono"><span class="live" id="touchEvt"></span></td></tr>
-        </tbody>
-      </table>
-      <p class="muted small">說明：支援多點觸控；桌面瀏覽器可能改以滑鼠事件觸發。</p>
-    </section>
+  <div id="touch" class="tab-content">
+    <h2>Touch 觸控測試</h2>
+    <div id="touchbox" class="touchbox">在此框內觸控或滑動</div>
+    <table>
+      <tr><th>觸點數</th><td class="mono" id="touchCount"></td></tr>
+      <tr><th>主要觸點</th><td class="mono" id="touchPos"></td></tr>
+      <tr><th>事件</th><td class="mono" id="touchEvt"></td></tr>
+    </table>
   </div>
 
   <script>
-    // --------- 工具函式 ---------
-    const $ = (id) => document.getElementById(id);
-    const fmt = (n, d=2) => (Number.isFinite(n) ? n.toFixed(d) : "—");
-    const badge = (ok, textOk="支援", textNo="不支援") =>
-      `<span class="badge ${ok ? 'ok':'no'}">${ok?textOk:textNo}</span>`;
+    // Tab 切換
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
 
-    // 安全情境（HTTPS/localhost）提示
-    const isSecure = window.isSecureContext;
-    $("secureState").className = `badge ${isSecure ? 'ok':'warn'}`;
-    $("secureState").textContent = isSecure ? "🔒 Secure context" : "⚠️ 非安全情境（iOS 可能拒絕權限）";
-
-    // --------- 支援度偵測 ---------
+    // 支援度檢查
     const support = {
       DeviceMotionEvent: 'DeviceMotionEvent' in window,
       DeviceOrientationEvent: 'DeviceOrientationEvent' in window,
       TouchEvents: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
       Vibration: 'vibrate' in navigator
     };
+    const badge = (ok) => `<span class="badge ${ok?'ok':'no'}">${ok?'支援':'不支援'}</span>`;
+    document.getElementById("supportTable").innerHTML = `
+      <tr><th>DeviceMotionEvent</th><td>${badge(support.DeviceMotionEvent)}</td></tr>
+      <tr><th>DeviceOrientationEvent</th><td>${badge(support.DeviceOrientationEvent)}</td></tr>
+      <tr><th>Touch Events</th><td>${badge(support.TouchEvents)}</td></tr>
+      <tr><th>Vibration API</th><td>${badge(support.Vibration)}</td></tr>
+    `;
 
-    const supportRows = [
-      ["DeviceMotionEvent（加速度/旋轉）", support.DeviceMotionEvent],
-      ["DeviceOrientationEvent（方向角）", support.DeviceOrientationEvent],
-      ["Touch Events（觸控）", support.TouchEvents],
-      ["Vibration API（震動）", support.Vibration]
-    ].map(([label, ok]) => `<tr><th>${label}</th><td>${badge(ok)}</td></tr>`).join("");
-    $("supportTable").innerHTML = supportRows;
-
-    // --------- iOS 權限請求（需使用者點擊） ---------
-    async function requestIOSPermission() {
-      const reqs = [];
-      const DME = window.DeviceMotionEvent;
-      const DOE = window.DeviceOrientationEvent;
-
-      if (DME && typeof DME.requestPermission === "function") {
-        reqs.push(DME.requestPermission().catch(e => e));
-      }
-      if (DOE && typeof DOE.requestPermission === "function") {
-        reqs.push(DOE.requestPermission().catch(e => e));
-      }
-      if (reqs.length === 0) {
-        $("note").textContent = "此瀏覽器不需要（或不支援）顯式感測器權限請求。";
-        return;
-      }
-      try {
-        const results = await Promise.all(reqs);
-        const txt = results.map((r, i) => `授權${i+1}：${r && r.toString ? r.toString() : r}`).join(" / ");
-        $("note").textContent = "權限結果 → " + txt;
-      } catch (err) {
-        $("note").textContent = "權限請求失敗：" + err;
-      }
-    }
-
-    // --------- 事件處理（可啟動/停止） ---------
-    let running = false;
-    let lastPaint = 0;
-
-    const onMotion = (e) => {
-      // 簡單節流：~8–10Hz 更新，避免 UI 過載
-      const now = performance.now();
-      if (now - lastPaint < 100) return;
-      lastPaint = now;
-
+    // DeviceMotion
+    window.addEventListener("devicemotion", e => {
       const a = e.acceleration || {};
       const ag = e.accelerationIncludingGravity || {};
       const r = e.rotationRate || {};
-      $("acc").textContent  = `x=${fmt(a.x)} y=${fmt(a.y)} z=${fmt(a.z)}`;
-      $("accG").textContent = `x=${fmt(ag.x)} y=${fmt(ag.y)} z=${fmt(ag.z)}`;
-      $("rot").textContent  = `alpha=${fmt(r.alpha)} beta=${fmt(r.beta)} gamma=${fmt(r.gamma)}`;
-      $("interval").textContent = fmt(e.interval, 0);
-    };
+      document.getElementById("acc").textContent = `x=${a.x?.toFixed(2)} y=${a.y?.toFixed(2)} z=${a.z?.toFixed(2)}`;
+      document.getElementById("accG").textContent = `x=${ag.x?.toFixed(2)} y=${ag.y?.toFixed(2)} z=${ag.z?.toFixed(2)}`;
+      document.getElementById("rot").textContent = `alpha=${r.alpha?.toFixed(2)} beta=${r.beta?.toFixed(2)} gamma=${r.gamma?.toFixed(2)}`;
+      document.getElementById("interval").textContent = e.interval;
+    });
 
-    const onOrient = (e) => {
-      $("alpha").textContent = fmt(e.alpha);
-      $("beta").textContent  = fmt(e.beta);
-      $("gamma").textContent = fmt(e.gamma);
-      $("absolute").textContent = String(!!e.absolute);
-    };
+    // DeviceOrientation
+    window.addEventListener("deviceorientation", e => {
+      document.getElementById("alpha").textContent = e.alpha?.toFixed(2);
+      document.getElementById("beta").textContent = e.beta?.toFixed(2);
+      document.getElementById("gamma").textContent = e.gamma?.toFixed(2);
+      document.getElementById("absolute").textContent = e.absolute;
+    });
 
-    const touchBox = $("touchbox");
-    const updTouch = (type, ev) => {
-      const t = ev.touches && ev.touches[0];
-      $("touchCount").textContent = ev.touches ? ev.touches.length : 0;
-      $("touchPos").textContent = t ? `x=${fmt(t.clientX,0)} y=${fmt(t.clientY,0)}` : "—";
-      $("touchEvt").textContent = type;
-    };
-
-    const onTouchStart = (e) => { updTouch("touchstart", e); };
-    const onTouchMove  = (e) => { updTouch("touchmove", e); e.preventDefault(); };
-    const onTouchEnd   = (e) => { updTouch("touchend", e); };
-
-    function start() {
-      if (running) return;
-      running = true;
-      $("btnStart").disabled = true;
-      $("btnStop").disabled = false;
-
-      // 感測器事件
-      if (support.DeviceMotionEvent) {
-        window.addEventListener("devicemotion", onMotion, { passive: true });
-      }
-      if (support.DeviceOrientationEvent) {
-        window.addEventListener("deviceorientation", onOrient, { passive: true });
-      }
-
-      // 觸控事件
-      touchBox.addEventListener("touchstart", onTouchStart, { passive: false });
-      touchBox.addEventListener("touchmove",  onTouchMove,  { passive: false });
-      touchBox.addEventListener("touchend",   onTouchEnd,   { passive: true });
-      touchBox.addEventListener("touchcancel",onTouchEnd,   { passive: true });
+    // Touch
+    const box = document.getElementById("touchbox");
+    function showTouch(ev, type) {
+      const t = ev.touches[0];
+      document.getElementById("touchCount").textContent = ev.touches.length;
+      document.getElementById("touchPos").textContent = t ? `x=${t.clientX} y=${t.clientY}` : "—";
+      document.getElementById("touchEvt").textContent = type;
     }
-
-    function stop() {
-      if (!running) return;
-      running = false;
-      $("btnStart").disabled = false;
-      $("btnStop").disabled = true;
-
-      window.removeEventListener("devicemotion", onMotion);
-      window.removeEventListener("deviceorientation", onOrient);
-      touchBox.removeEventListener("touchstart", onTouchStart);
-      touchBox.removeEventListener("touchmove", onTouchMove);
-      touchBox.removeEventListener("touchend", onTouchEnd);
-      touchBox.removeEventListener("touchcancel", onTouchEnd);
-    }
-
-    // --------- 震動測試 ---------
-    function vibrateTest() {
-      if (!support.Vibration) {
-        alert("此瀏覽器/裝置不支援 Vibration API");
-        return;
-      }
-      // 範例：200ms 震動 → 100ms 停 → 200ms 震動
-      navigator.vibrate([200, 100, 200]);
-    }
-
-    // --------- 綁定按鈕 ---------
-    $("btnStart").addEventListener("click", start);
-    $("btnStop").addEventListener("click", stop);
-    $("btnPerm").addEventListener("click", requestIOSPermission);
-    $("btnVibrate").addEventListener("click", vibrateTest);
-
-    // 預設不自動啟動（需互動較符合 iOS 政策）；可改成自動 start()
+    box.addEventListener("touchstart", e => showTouch(e, "touchstart"), {passive:false});
+    box.addEventListener("touchmove", e => showTouch(e, "touchmove"), {passive:false});
+    box.addEventListener("touchend", e => showTouch(e, "touchend"));
   </script>
 </body>
 </html>
